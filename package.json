@@ -1,0 +1,18 @@
+{
+  "name": "gestion-productos",
+  "version": "1.0.0",
+  "description": "Gestión de productos con Node.js, Express, PostgreSQL y Docker",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test tests/validation.test.js",
+    "test:integration": "node --test tests/integration.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "4.22.3",
+    "pg": "8.13.1"
+  }
+}
