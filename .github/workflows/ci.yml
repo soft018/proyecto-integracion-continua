@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.11.0"
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Ejecutar validaciones automatizadas
+        run: npm test
+
+      - name: Preparar variables de entorno de ejemplo
+        run: cp .env.example .env
+
+      - name: Construir la imagen Docker de la aplicación
+        run: docker build -t gestion-productos:ci .
+
+      - name: Levantar los dos servicios
+        run: docker compose up -d --wait --wait-timeout 120
+
+      - name: Verificar que los contenedores están en ejecución
+        run: docker compose ps
+
+      - name: Ejecutar prueba de integración contra PostgreSQL
+        run: npm run test:integration
+        env:
+          APP_URL: http://127.0.0.1:3000
+
+      - name: Detener los servicios
+        if: always()
+        run: docker compose down
