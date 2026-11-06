@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión de productos</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <header class="hero">
+        <p class="eyebrow">Énfasis Profesional I · Integración Continua</p>
+        <h1>Gestión de productos</h1>
+        <p>
+          Registre y consulte productos almacenados en PostgreSQL a través de
+          dos contenedores Docker: <strong>app</strong> y <strong>db</strong>.
+        </p>
+      </header>
+
+      <section class="card">
+        <h2>Registrar producto</h2>
+        <form id="formulario-producto">
+          <div class="grid">
+            <label>
+              Nombre
+              <input
+                id="nombre"
+                name="nombre"
+                type="text"
+                maxlength="120"
+                required
+                placeholder="Ejemplo: Cuaderno universitario"
+              />
+            </label>
+            <label>
+              Precio
+              <input
+                id="precio"
+                name="precio"
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                placeholder="0.00"
+              />
+            </label>
+            <label class="full">
+              Descripción
+              <textarea
+                id="descripcion"
+                name="descripcion"
+                maxlength="500"
+                required
+                placeholder="Describa el producto"
+              ></textarea>
+            </label>
+            <label>
+              Cantidad
+              <input
+                id="cantidad"
+                name="cantidad"
+                type="number"
+                min="0"
+                step="1"
+                required
+                placeholder="0"
+              />
+            </label>
+          </div>
+          <button type="submit">Guardar producto</button>
+        </form>
+        <div id="alerta" class="alerta" hidden></div>
+      </section>
+
+      <section class="card">
+        <div class="table-header">
+          <h2>Productos registrados</h2>
+          <button type="button" id="boton-actualizar" class="secundario">
+            Actualizar lista
+          </button>
+        </div>
+        <div class="tabla-contenedor">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Precio</th>
+                <th>Cantidad</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-productos">
+              <tr>
+                <td colspan="5">Cargando productos...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <script src="/app.js"></script>
+  </body>
+</html>
