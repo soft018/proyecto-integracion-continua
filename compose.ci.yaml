@@ -7,8 +7,8 @@ services:
       dockerfile: Dockerfile
     image: gestion-productos:jenkins
     container_name: gestion-ci-app
-    ports:
-      - "127.0.0.1:3001:3000"
+    expose:
+      - "3000"
     environment:
       NODE_ENV: production
       PORT: 3000
