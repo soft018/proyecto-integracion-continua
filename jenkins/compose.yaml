@@ -1,0 +1,33 @@
+name: jenkins-ci
+
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jenkins-ci:2.580.2
+    container_name: jenkins-ci
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:8080"
+    environment:
+      JAVA_OPTS: "-Djava.awt.headless=true"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    networks:
+      - jenkins_net
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/login"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+
+networks:
+  jenkins_net:
+    name: jenkins_net
+    driver: bridge
+
+volumes:
+  jenkins_home:
+    name: jenkins_home
