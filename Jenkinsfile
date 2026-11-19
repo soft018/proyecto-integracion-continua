@@ -1,5 +1,9 @@
 pipeline {
-  agent any
+  agent {
+    node {
+      customWorkspace '/var/jenkins_home/workspace/gestion-ci'
+    }
+  }
 
   options {
     timestamps()
@@ -11,7 +15,9 @@ pipeline {
     COMPOSE_FILE = 'compose.ci.yaml'
     APP_IMAGE = 'gestion-productos:jenkins'
     DB_IMAGE = 'postgres:16.4-alpine3.20'
-    APP_URL = 'http://host.docker.internal:3001'
+    NODE_TEST_IMAGE = 'node:22.11.0-alpine3.20'
+    CI_NETWORK = 'gestion_ci_net'
+    APP_URL = 'http://app:3000'
   }
 
   triggers {
@@ -29,9 +35,12 @@ pipeline {
       steps {
         sh '''
           set -eu
+          echo "DOCKER_HOST=${DOCKER_HOST:-unset}"
+          echo "DOCKER_TLS_VERIFY=${DOCKER_TLS_VERIFY:-unset}"
           docker version
           docker build -t "$APP_IMAGE" .
           docker pull "$DB_IMAGE"
+          docker pull "$NODE_TEST_IMAGE"
           docker image inspect "$APP_IMAGE" >/dev/null
           docker image inspect "$DB_IMAGE" >/dev/null
         '''
@@ -52,7 +61,14 @@ pipeline {
           test "$app_health" = "healthy"
           test "$db_health" = "healthy"
           docker compose --env-file .env.example -f "$COMPOSE_FILE" exec -T app node -e "require('dns').lookup('db', (err, address) => { if (err || !address) { console.error(err || 'sin direccion'); process.exit(1); } console.log('hostname db resuelve a ' + address); })"
-          npm run test:integration
+          workdir="$(pwd)"
+          docker run --rm \
+            --network "$CI_NETWORK" \
+            -v "$workdir:$workdir" \
+            -w "$workdir" \
+            -e APP_URL="$APP_URL" \
+            "$NODE_TEST_IMAGE" \
+            sh -c "npm ci && npm run test:integration"
         '''
       }
     }
