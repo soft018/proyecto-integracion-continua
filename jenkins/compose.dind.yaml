@@ -4,8 +4,20 @@
 #   docker compose -f compose.yaml -f compose.dind.yaml --profile dind up -d
 # No monta /var/run/docker.sock ni el volumen jenkins_home en DinD.
 # No publica el puerto 2376 en el anfitrión.
+# El volumen jenkins-workspace nace como root; workspace-init lo deja en uid 1000 (jenkins).
 
 services:
+  workspace-init:
+    profiles:
+      - dind
+    image: alpine:3.21.3
+    container_name: jenkins-workspace-init
+    user: "0:0"
+    restart: "no"
+    volumes:
+      - jenkins-workspace:/workspace
+    command: ["chown", "-R", "1000:1000", "/workspace"]
+
   docker:
     profiles:
       - dind
@@ -45,6 +57,8 @@ services:
     depends_on:
       docker:
         condition: service_healthy
+      workspace-init:
+        condition: service_completed_successfully
 
 volumes:
   jenkins-docker-certs:
