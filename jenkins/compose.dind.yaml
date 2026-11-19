@@ -1,0 +1,55 @@
+# Overlay de Docker-in-Docker para Jenkins.
+# privileged: true aplica SOLO al servicio docker (contenedor jenkins-dind).
+# Activación:
+#   docker compose -f compose.yaml -f compose.dind.yaml --profile dind up -d
+# No monta /var/run/docker.sock ni el volumen jenkins_home en DinD.
+# No publica el puerto 2376 en el anfitrión.
+
+services:
+  docker:
+    profiles:
+      - dind
+    image: docker:27.5.1-dind
+    container_name: jenkins-dind
+    hostname: docker
+    restart: unless-stopped
+    environment:
+      DOCKER_TLS_CERTDIR: /certs
+    volumes:
+      - jenkins-docker-certs:/certs/client
+      - jenkins-docker-data:/var/lib/docker
+      - jenkins-workspace:/var/jenkins_home/workspace
+    networks:
+      jenkins_net:
+        aliases:
+          - docker
+    expose:
+      - "2376"
+    healthcheck:
+      test: ["CMD", "docker", "info"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 25s
+    privileged: true
+
+  jenkins:
+    environment:
+      DOCKER_HOST: tcp://docker:2376
+      DOCKER_CERT_PATH: /certs/client
+      DOCKER_TLS_VERIFY: "1"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - jenkins-workspace:/var/jenkins_home/workspace
+      - jenkins-docker-certs:/certs/client:ro
+    depends_on:
+      docker:
+        condition: service_healthy
+
+volumes:
+  jenkins-docker-certs:
+    name: jenkins-docker-certs
+  jenkins-docker-data:
+    name: jenkins-docker-data
+  jenkins-workspace:
+    name: jenkins-workspace
