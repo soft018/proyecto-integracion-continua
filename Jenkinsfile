@@ -52,6 +52,12 @@ pipeline {
       steps {
         sh '''
           set -eu
+          workdir="$(pwd)"
+          docker run --rm \
+            -v "$workdir:$workdir" \
+            -w "$workdir" \
+            "$NODE_TEST_IMAGE" \
+            rm -rf node_modules
           npm ci
           npm test
           docker compose --env-file .env.example -f "$COMPOSE_FILE" up -d --build --wait --wait-timeout 120
@@ -62,11 +68,13 @@ pipeline {
           test "$app_health" = "healthy"
           test "$db_health" = "healthy"
           docker compose --env-file .env.example -f "$COMPOSE_FILE" exec -T app node -e "require('dns').lookup('db', (err, address) => { if (err || !address) { console.error(err || 'sin direccion'); process.exit(1); } console.log('hostname db resuelve a ' + address); })"
-          workdir="$(pwd)"
           docker run --rm \
             --network "$CI_NETWORK" \
             -v "$workdir:$workdir" \
             -w "$workdir" \
+            -u 1000:1000 \
+            -e HOME=/tmp \
+            -e npm_config_cache=/tmp/npm-cache \
             -e APP_URL="$APP_URL" \
             "$NODE_TEST_IMAGE" \
             sh -c "npm ci && npm run test:integration"
